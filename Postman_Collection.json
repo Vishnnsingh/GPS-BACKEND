@@ -1361,31 +1361,12 @@
 					}
 				}
 			]
-		}
-		,
+		},
 		{
-			"name": "Google Drive Images",
-			"description": "Images CRUD + Bulk upload on Google Drive. Requires login (Bearer {{access_token}}).\n\nSet collection variables:\n- drive_folder_id: Google Drive folder id (share folder with service-account email)\n- drive_file_id: filled automatically after upload (from response.file.id)\n\nTip: use ?public=true if you want public links (Drive permission anyone:reader).",
+			"name": "MEGA Images",
 			"item": [
 				{
 					"name": "Upload Single Image",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"if (pm.response.code === 201) {",
-									"  const r = pm.response.json();",
-									"  if (r && r.file && r.file.id) {",
-									"    pm.collectionVariables.set('drive_file_id', r.file.id);",
-									"    console.log('✅ drive_file_id saved:', r.file.id);",
-									"  }",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
 					"request": {
 						"method": "POST",
 						"header": [
@@ -1402,58 +1383,32 @@
 									"key": "image",
 									"type": "file",
 									"src": ""
-								},
-								{
-									"key": "name",
-									"value": "sample-image.jpg",
-									"type": "text"
 								}
 							]
 						},
 						"url": {
-							"raw": "{{base_url}}/api/drive/images?folderId={{drive_folder_id}}&public=false",
+							"raw": "{{base_url}}/api/mega/images?public=false",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
 								"api",
-								"drive",
+								"mega",
 								"images"
 							],
 							"query": [
 								{
-									"key": "folderId",
-									"value": "{{drive_folder_id}}"
-								},
-								{
 									"key": "public",
-									"value": "false"
+									"value": "false",
+									"description": "true = MEGA link will be returned. false = private (no link returned)."
 								}
 							]
 						},
-						"description": "Upload a single image to Google Drive. Body: form-data (image=file, optional name=text)."
+						"description": "Upload a single image to MEGA.\n\nNo folderId required (server stores under configured MEGA folder paths).\n\nMultipart field name: `image` (also accepts `file`)."
 					}
 				},
 				{
 					"name": "Upload Bulk Images",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"if (pm.response.code === 201 || pm.response.code === 207) {",
-									"  const r = pm.response.json();",
-									"  const first = r?.results?.success?.[0]?.file?.id;",
-									"  if (first) {",
-									"    pm.collectionVariables.set('drive_file_id', first);",
-									"    console.log('✅ drive_file_id saved (first uploaded):', first);",
-									"  }",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
 					"request": {
 						"method": "POST",
 						"header": [
@@ -1470,41 +1425,33 @@
 									"key": "images",
 									"type": "file",
 									"src": ""
-								},
-								{
-									"key": "images",
-									"type": "file",
-									"src": ""
 								}
 							]
 						},
 						"url": {
-							"raw": "{{base_url}}/api/drive/images/bulk?folderId={{drive_folder_id}}&public=false",
+							"raw": "{{base_url}}/api/mega/images/bulk?public=false",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
 								"api",
-								"drive",
+								"mega",
 								"images",
 								"bulk"
 							],
 							"query": [
 								{
-									"key": "folderId",
-									"value": "{{drive_folder_id}}"
-								},
-								{
 									"key": "public",
-									"value": "false"
+									"value": "false",
+									"description": "true = MEGA links returned for each file. false = private uploads (url will be null)."
 								}
 							]
 						},
-						"description": "Bulk upload images to Google Drive. Body: form-data images=<file> (multiple)."
+						"description": "Upload multiple images to MEGA.\n\nMultipart field name: `images` (multiple). Also accepts multiple `image` fields."
 					}
 				},
 				{
-					"name": "List Images",
+					"name": "List Images (with link)",
 					"request": {
 						"method": "GET",
 						"header": [
@@ -1515,127 +1462,29 @@
 							}
 						],
 						"url": {
-							"raw": "{{base_url}}/api/drive/images?folderId={{drive_folder_id}}&pageSize=50",
+							"raw": "{{base_url}}/api/mega/images?public=false&includeLinks=true",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
 								"api",
-								"drive",
+								"mega",
 								"images"
 							],
 							"query": [
 								{
-									"key": "folderId",
-									"value": "{{drive_folder_id}}"
+									"key": "public",
+									"value": "false",
+									"description": "false = list private folder, true = list public folder"
 								},
 								{
-									"key": "pageSize",
-									"value": "50"
-								},
-								{
-									"key": "pageToken",
-									"value": "",
-									"disabled": true
+									"key": "includeLinks",
+									"value": "true",
+									"description": "true = generate/return links. false = faster list without links."
 								}
 							]
 						},
-						"description": "List images from the configured Drive folder."
-					}
-				},
-				{
-					"name": "Get Image Meta",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/drive/images/{{drive_file_id}}",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"drive",
-								"images",
-								"{{drive_file_id}}"
-							]
-						},
-						"description": "Get Google Drive file metadata."
-					}
-				},
-				{
-					"name": "Download Image",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/drive/images/{{drive_file_id}}/download",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"drive",
-								"images",
-								"{{drive_file_id}}",
-								"download"
-							]
-						},
-						"description": "Download/stream image bytes from Google Drive."
-					}
-				},
-				{
-					"name": "Replace Image (Update)",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "formdata",
-							"formdata": [
-								{
-									"key": "image",
-									"type": "file",
-									"src": ""
-								},
-								{
-									"key": "name",
-									"value": "",
-									"type": "text",
-									"disabled": true
-								}
-							]
-						},
-						"url": {
-							"raw": "{{base_url}}/api/drive/images/{{drive_file_id}}",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"drive",
-								"images",
-								"{{drive_file_id}}"
-							]
-						},
-						"description": "Replace/update the file content for an existing Drive file id."
+						"description": "List images stored in MEGA folder (public/private). Returns nodeId and url (if includeLinks=true)."
 					}
 				},
 				{
@@ -1650,18 +1499,24 @@
 							}
 						],
 						"url": {
-							"raw": "{{base_url}}/api/drive/images/{{drive_file_id}}",
+							"raw": "{{base_url}}/api/mega/images/:nodeId",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
 								"api",
-								"drive",
+								"mega",
 								"images",
-								"{{drive_file_id}}"
+								":nodeId"
+							],
+							"variable": [
+								{
+									"key": "nodeId",
+									"value": "paste-nodeId-here"
+								}
 							]
 						},
-						"description": "Delete a Drive file by id."
+						"description": "Delete an image from MEGA by nodeId (you get nodeId from upload/list APIs)."
 					}
 				}
 			]
@@ -1680,16 +1535,6 @@
 		},
 		{
 			"key": "refresh_token",
-			"value": "",
-			"type": "string"
-		},
-		{
-			"key": "drive_folder_id",
-			"value": "",
-			"type": "string"
-		},
-		{
-			"key": "drive_file_id",
 			"value": "",
 			"type": "string"
 		}
