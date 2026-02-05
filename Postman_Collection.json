@@ -599,10 +599,42 @@
 			]
 		},
 		{
-			"name": "Fees",
+			"name": "Fee Structure Management",
 			"item": [
 				{
-					"name": "Get All Fees",
+					"name": "Create Fee Structure",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"class\": \"1\",\n  \"section\": \"A\",\n  \"fee_name\": \"Tuition Fee\",\n  \"fee_amount\": 5000,\n  \"is_optional\": false\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/fee-structure",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"fee-structure"
+							]
+						},
+						"description": "Create a new fee structure entry. Access: Admin Only"
+					}
+				},
+				{
+					"name": "Get Fee Structures",
 					"request": {
 						"method": "GET",
 						"header": [
@@ -613,83 +645,33 @@
 							}
 						],
 						"url": {
-							"raw": "{{base_url}}/api/fees",
+							"raw": "{{base_url}}/api/fee-structure?class=1&section=A",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
 								"api",
-								"fees"
+								"fee-structure"
+							],
+							"query": [
+								{
+									"key": "class",
+									"value": "1",
+									"description": "Optional: Filter by class"
+								},
+								{
+									"key": "section",
+									"value": "A",
+									"description": "Optional: Filter by section",
+									"disabled": true
+								}
 							]
-						}
-					}
-				},
-				{
-					"name": "Generate Fee",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"student_id\": \"student-uuid\",\n  \"month\": \"April\",\n  \"baseFee\": 1000\n}"
 						},
-						"url": {
-							"raw": "{{base_url}}/api/fees/generate",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"fees",
-								"generate"
-							]
-						}
+						"description": "Get fee structures with optional filters. Access: Admin Only"
 					}
 				},
 				{
-					"name": "Generate Bulk Fees",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"className\": \"1\",\n  \"month\": \"April\",\n  \"baseFee\": 1000\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/fees/generate-bulk",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"fees",
-								"generate-bulk"
-							]
-						}
-					}
-				},
-				{
-					"name": "Pay Fee",
+					"name": "Update Fee Structure",
 					"request": {
 						"method": "PUT",
 						"header": [
@@ -705,26 +687,284 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"paid_amount\": 1000\n}"
+							"raw": "{\n  \"fee_amount\": 5500,\n  \"is_optional\": true\n}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/fees/pay/:id",
+							"raw": "{{base_url}}/api/fee-structure/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"fee-structure",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "fee-structure-uuid-here"
+								}
+							]
+						},
+						"description": "Update fee structure. Access: Admin Only"
+					}
+				},
+				{
+					"name": "Delete Fee Structure",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/fee-structure/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"fee-structure",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "fee-structure-uuid-here"
+								}
+							]
+						},
+						"description": "Delete fee structure. Access: Admin Only"
+					}
+				}
+			]
+		},
+		{
+			"name": "Bulk Bill Generation",
+			"item": [
+				{
+					"name": "Generate Bulk Bills",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"class\": \"1\",\n  \"section\": \"A\",\n  \"month\": \"2024-01\",\n  \"includeAnnualFee\": true,\n  \"includeExamFee\": true,\n  \"includeComputerFee\": false,\n  \"includeOptionalFees\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/billing/generate-bulk",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"billing",
+								"generate-bulk"
+							]
+						},
+						"description": "Generate bulk bills with checkbox options. Access: Admin Only"
+					}
+				},
+				{
+					"name": "Get Bill by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/billing/bill/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"billing",
+								"bill",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "bill-uuid-here"
+								}
+							]
+						},
+						"description": "Get a single bill by ID with items and payments. Access: Admin Only"
+					}
+				},
+				{
+					"name": "Download Bills PDF",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/billing/download?class=1&month=2024-01&section=A",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"billing",
+								"download"
+							],
+							"query": [
+								{
+									"key": "class",
+									"value": "1",
+									"description": "Class name (required)"
+								},
+								{
+									"key": "month",
+									"value": "2024-01",
+									"description": "Month in YYYY-MM format (required)"
+								},
+								{
+									"key": "section",
+									"value": "A",
+									"description": "Section (optional)",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Download bills as PDF (4 bills per page). Access: Admin Only"
+					}
+				}
+			]
+		},
+		{
+			"name": "Fees Management",
+			"item": [
+				{
+					"name": "Get Fee List (Dashboard)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/fees/list?class=1&section=A&month=2024-01",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
 								"api",
 								"fees",
-								"pay",
-								":id"
+								"list"
+							],
+							"query": [
+								{
+									"key": "class",
+									"value": "1",
+									"description": "Optional: Filter by class"
+								},
+								{
+									"key": "section",
+									"value": "A",
+									"description": "Optional: Filter by section",
+									"disabled": true
+								},
+								{
+									"key": "month",
+									"value": "2024-01",
+									"description": "Optional: Filter by month (YYYY-MM)",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get fee list for dashboard with all required columns. Access: Admin or Teacher"
+					}
+				},
+				{
+					"name": "Record Fee Payment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"class\": \"1\",\n  \"roll_number\": 1,\n  \"amount_paid\": 3000,\n  \"payment_mode\": \"cash\",\n  \"payment_date\": \"2024-01-22\",\n  \"month\": \"2024-01\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/fees/pay",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"fees",
+								"pay"
+							]
+						},
+						"description": "Record fee payment using class and roll_number. Returns student details, bill_id, and payment info. Payment modes: cash, cheque, online, bank_transfer. Access: Admin Only"
+					}
+				},
+				{
+					"name": "Get Invoice Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/fees/invoice/:bill_id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"fees",
+								"invoice",
+								":bill_id"
 							],
 							"variable": [
 								{
-									"key": "id",
-									"value": "fee-uuid-here"
+									"key": "bill_id",
+									"value": "bill-uuid-here"
 								}
 							]
-						}
+						},
+						"description": "Get invoice details with items and payments. Access: Admin or Teacher"
 					}
 				},
 				{
@@ -744,7 +984,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"month\": \"April\"\n}"
+							"raw": "{\n  \"month\": \"2024-01\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/fees/close-month",
@@ -756,74 +996,12 @@
 								"fees",
 								"close-month"
 							]
-						}
-					}
-				},
-				{
-					"name": "Get Fee Invoice",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/fees/invoice/:id",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"fees",
-								"invoice",
-								":id"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "fee-uuid-here"
-								}
-							]
-						}
-					}
-				},
-				{
-					"name": "Save Fee Structure",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"className\": \"1\",\n  \"baseFee\": 1000,\n  \"transportFee\": 300,\n  \"examFee\": 200,\n  \"annualFee\": 50\n}"
 						},
-						"url": {
-							"raw": "{{base_url}}/api/fees/structure",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"fees",
-								"structure"
-							]
-						}
+						"description": "Close a month and handle dues for unpaid fees. Prevents duplicate closing. Access: Admin Only"
 					}
 				},
 				{
-					"name": "Get Fee Structure by Class",
+					"name": "Get Student Dues",
 					"request": {
 						"method": "GET",
 						"header": [
@@ -834,23 +1012,24 @@
 							}
 						],
 						"url": {
-							"raw": "{{base_url}}/api/fees/structure/:className",
+							"raw": "{{base_url}}/api/fees/dues/:student_id",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
 								"api",
 								"fees",
-								"structure",
-								":className"
+								"dues",
+								":student_id"
 							],
 							"variable": [
 								{
-									"key": "className",
-									"value": "1"
+									"key": "student_id",
+									"value": "student-uuid-here"
 								}
 							]
-						}
+						},
+						"description": "Get dues for a student. Access: Admin or Teacher"
 					}
 				}
 			]
@@ -859,7 +1038,7 @@
 			"name": "Invoice",
 			"item": [
 				{
-					"name": "Get Invoice by ID",
+					"name": "Download Invoice PDF",
 					"request": {
 						"method": "GET",
 						"header": [
@@ -870,23 +1049,24 @@
 							}
 						],
 						"url": {
-							"raw": "{{base_url}}/api/invoice/invoice/:id",
+							"raw": "{{base_url}}/api/invoice/download/:bill_id",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
 								"api",
 								"invoice",
-								"invoice",
-								":id"
+								"download",
+								":bill_id"
 							],
 							"variable": [
 								{
-									"key": "id",
-									"value": "invoice-uuid-here"
+									"key": "bill_id",
+									"value": "bill-uuid-here"
 								}
 							]
-						}
+						},
+						"description": "Download professional invoice as PDF. Access: Admin or Teacher"
 					}
 				}
 			]
