@@ -522,6 +522,39 @@
 					}
 				},
 				{
+					"name": "Edit Marks",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"class\": \"1\",\n  \"section\": \"A\",\n  \"terminal\": \"First\",\n  \"roll_no\": 1,\n  \"marks\": [\n    {\n      \"subject_name\": \"Hindi\",\n      \"external_marks\": 75,\n      \"internal_marks\": 19\n    },\n    {\n      \"subject_code\": \"ENG\",\n      \"external_marks\": 80,\n      \"internal_marks\": 20\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/marks/edit",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"marks",
+								"edit"
+							]
+						},
+						"description": "Edit/Update existing marks for a student. Only updates marks that already exist. Use POST /api/marks/submit to add new marks. Access: Admin & Teacher"
+					}
+				},
+				{
 					"name": "Get Student Result (Public)",
 					"request": {
 						"method": "GET",
@@ -618,7 +651,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"class\": \"1\",\n  \"section\": \"A\",\n  \"fee_name\": \"Tuition Fee\",\n  \"fee_amount\": 5000,\n  \"is_optional\": false\n}"
+							"raw": "{\n  \"class\": \"UKG\",\n  \"section\": \"B\",\n  \"tuition_fee\": 5000,\n  \"exam_fee\": 1200,\n  \"annual_fee\": 2500,\n  \"computer_fee\": 800\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/fee-structure",
@@ -630,7 +663,7 @@
 								"fee-structure"
 							]
 						},
-						"description": "Create a new fee structure entry. Access: Admin Only"
+						"description": "Create fee structure entries. Supports two formats:\n1. Old format: { class, section?, tuition_fee, exam_fee, annual_fee, computer_fee } - Creates 4 entries (Tuition, Exam, Annual, Computer)\n2. New format: { class, section?, fee_name, fee_amount, is_optional? } - Creates single entry\nAccess: Admin Only"
 					}
 				},
 				{
@@ -919,7 +952,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"class\": \"1\",\n  \"roll_number\": 1,\n  \"amount_paid\": 3000,\n  \"payment_mode\": \"cash\",\n  \"payment_date\": \"2024-01-22\",\n  \"month\": \"2024-01\"\n}"
+							"raw": "{\n  \"class\": \"1\",\n  \"section\": \"A\",\n  \"roll_number\": 1,\n  \"amount_paid\": 3000,\n  \"payment_mode\": \"cash\",\n  \"payment_date\": \"2024-01-22\",\n  \"month\": \"2024-01\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/fees/pay",
@@ -932,7 +965,7 @@
 								"pay"
 							]
 						},
-						"description": "Record fee payment using class and roll_number. Returns student details, bill_id, and payment info. Payment modes: cash, cheque, online, bank_transfer. Access: Admin Only"
+						"description": "Record fee payment using class, section, and roll_number. If payment exceeds bill total, excess amount is automatically saved as advance in advance_ledger. Returns student details, bill_id, payment info, and advance details. Payment modes: cash, cheque, online, bank_transfer. Access: Admin Only"
 					}
 				},
 				{
@@ -1098,10 +1131,12 @@
 							"query": [
 								{
 									"key": "month",
-									"value": "2024-04"
+									"value": "2024-04",
+									"description": "Month in YYYY-MM format (required)"
 								}
 							]
-						}
+						},
+						"description": "Generate PDF with all bills for a given month (4 bills per page). Access: Admin Only"
 					}
 				},
 				{
@@ -1133,7 +1168,8 @@
 								"bills",
 								"generate"
 							]
-						}
+						},
+						"description": "Generate bills for all students in a specific class for a given month. Body: { class, month (YYYY-MM) }. Access: Admin Only"
 					}
 				},
 				{
@@ -1165,7 +1201,8 @@
 								"bills",
 								"generate-all"
 							]
-						}
+						},
+						"description": "Generate bills for all students in all classes for a given month. Body: { month (YYYY-MM) }. Access: Admin Only"
 					}
 				}
 			]
@@ -1174,20 +1211,44 @@
 			"name": "Results",
 			"item": [
 				{
-					"name": "Get Result",
+					"name": "Get Result (Public)",
 					"request": {
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/results",
+							"raw": "{{base_url}}/api/result?class=1&roll=1&terminal=First&section=A",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
 								"api",
-								"results"
+								"result"
+							],
+							"query": [
+								{
+									"key": "class",
+									"value": "1",
+									"description": "Student's class (required)"
+								},
+								{
+									"key": "roll",
+									"value": "1",
+									"description": "Roll number (required)"
+								},
+								{
+									"key": "terminal",
+									"value": "First",
+									"description": "Terminal: First, Second, or Annual (required)"
+								},
+								{
+									"key": "section",
+									"value": "A",
+									"description": "Section (optional)",
+									"disabled": true
+								}
 							]
-						}
+						},
+						"description": "Public endpoint - No authentication required. Get student result by class, roll number, and terminal. Returns marks, percentage, division, and status."
 					}
 				}
 			]
