@@ -1,1784 +1,2102 @@
 {
-	"info": {
-		"_postman_id": "school-management-backend-api",
-		"name": "School Management Backend API",
-		"description": "Complete API collection for School Management System Backend\n\n**Authentication:**\n- Uses Supabase JWT token authentication\n- Token expires after 30 minutes\n- Login automatically saves access_token and refresh_token\n- Logout invalidates token at Supabase level\n- All protected APIs require Authorization header: Bearer {{access_token}}\n\n**Public APIs:**\n- GET /api/results - Get student result (no auth required)\n- GET /api/marks/result - Get student result (no auth required)\n\n**Protected APIs:**\n- All other APIs require authentication\n- Admin only: Fees, Bills, Invoice, Subject management, User management\n- Admin & Teacher: Students, Marks, Subjects (read)",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-	},
-	"item": [
-		{
-			"name": "Authentication",
-			"item": [
-			{
-				"name": "Login",
-				"event": [
-					{
-						"listen": "test",
-						"script": {
-							"exec": [
-								"if (pm.response.code === 200) {",
-								"    const response = pm.response.json();",
-								"    if (response.session && response.session.access_token) {",
-								"        pm.collectionVariables.set('access_token', response.session.access_token);",
-								"        console.log('✅ Access token saved to collection variable');",
-								"    }",
-								"    if (response.session && response.session.refresh_token) {",
-								"        pm.collectionVariables.set('refresh_token', response.session.refresh_token);",
-								"        console.log('✅ Refresh token saved to collection variable');",
-								"    }",
-								"    if (response.token_info) {",
-								"        console.log('⏰ Token expires at:', response.token_info.expires_at);",
-								"        console.log('⏰ Token expires in:', response.token_info.expires_in, 'seconds (30 minutes)');",
-								"    }",
-								"}"
-							],
-							"type": "text/javascript"
-						}
-					}
-				],
-				"request": {
-					"method": "POST",
-					"header": [
-						{
-							"key": "Content-Type",
-							"value": "application/json"
-						}
-					],
-					"body": {
-						"mode": "raw",
-						"raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"your_password\"\n}"
-					},
-					"url": {
-						"raw": "{{base_url}}/api/auth/login",
-						"host": [
-							"{{base_url}}"
-						],
-						"path": [
-							"api",
-							"auth",
-							"login"
-						]
-					},
-					"description": "Login and automatically save access_token and refresh_token. After login, all protected APIs will use this token. Token expires after 30 minutes. Uses Supabase authentication."
-				}
-			},
-				{
-					"name": "Create User (Admin/Teacher)",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"email\": \"teacher@example.com\",\n  \"password\": \"Teacher@123\",\n  \"role\": \"teacher\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/auth/create-user",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"auth",
-								"create-user"
-							]
-						}
-					}
-				},
-				{
-					"name": "Forgot Password",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"email\": \"user@example.com\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/auth/forgot-password",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"auth",
-								"forgot-password"
-							]
-						}
-					}
-				},
-				{
-					"name": "Reset Password",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"email\": \"user@example.com\",\n  \"newPassword\": \"NewPassword@123\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/auth/reset-password",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"auth",
-								"reset-password"
-							]
-						}
-					}
-				},
-				{
-					"name": "Get All Users",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/api/auth/users",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"auth",
-								"users"
-							]
-						}
-					}
-				},
-				{
-					"name": "Remove User",
-					"request": {
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/auth/remove-user/:id",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"auth",
-								"remove-user",
-								":id"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "user-uuid-here"
-								}
-							]
-						},
-						"description": "Remove a user (admin or teacher). Requires admin authentication."
-					}
-				},
-				{
-					"name": "Logout",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/auth/logout",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"auth",
-								"logout"
-							]
-						},
-						"description": "Logout the current user (admin or teacher). Invalidates the access token at Supabase level. After logout, all protected APIs will be blocked. Only public result APIs will work."
-					}
-				},
-				{
-					"name": "Refresh Token",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"if (pm.response.code === 200) {",
-									"    const response = pm.response.json();",
-									"    if (response.session && response.session.access_token) {",
-									"        pm.collectionVariables.set('access_token', response.session.access_token);",
-									"        console.log('✅ New access token saved');",
-									"    }",
-									"    if (response.session && response.session.refresh_token) {",
-									"        pm.collectionVariables.set('refresh_token', response.session.refresh_token);",
-									"        console.log('✅ New refresh token saved');",
-									"    }",
-									"    if (response.token_info) {",
-									"        console.log('⏰ Token expires at:', response.token_info.expires_at);",
-									"    }",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/auth/refresh",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"auth",
-								"refresh"
-							]
-						},
-						"description": "Refresh the access token using refresh_token from login response. Use this before token expires (30 minutes). Returns new access_token and refresh_token. Automatically saves new tokens to collection variables."
-					}
-				}
-			]
-		},
-		{
-			"name": "Students",
-			"item": [
-				{
-					"name": "Get All Students Details",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/students/all?class=",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"students",
-								"all"
-							],
-							"query": [
-								{
-									"key": "class",
-									"value": "",
-									"description": "Optional: Filter by class (e.g., '1', '4'). Leave empty to get all classes."
-								}
-							]
-						},
-						"description": "Get all students details from all classes. Returns: Name, Father, Class, Section, Roll, Mobile, Address. Optional class filter available."
-					}
-				},
-				{
-					"name": "Get Students by Class",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/students?class=1",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"students"
-							],
-							"query": [
-								{
-									"key": "class",
-									"value": "1"
-								}
-							]
-						},
-						"description": "Get students by specific class (for bulk bill generation). Includes previous_due amount."
-					}
-				},
-				{
-					"name": "Add New Student",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"name\": \"John Doe\",\n  \"father_name\": \"Father Name\",\n  \"mother_name\": \"Mother Name\",\n  \"gender\": \"Male\",\n  \"class\": \"1\",\n  \"roll_no\": 1,\n  \"section\": \"A\",\n  \"mobile\": \"1234567890\",\n  \"address\": \"Student Address\",\n  \"uses_transport\": false,\n  \"transport_charge\": null\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/students/add",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"students",
-								"add"
-							]
-						}
-					}
-				},
-				{
-					"name": "Update Student",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"name\": \"John Doe Updated\",\n  \"father_name\": \"Father Name\",\n  \"mother_name\": \"Mother Name\",\n  \"gender\": \"Male\",\n  \"mobile\": \"1234567890\",\n  \"address\": \"Updated Address\",\n  \"class\": \"1\",\n  \"roll_no\": 1,\n  \"section\": \"A\",\n  \"uses_transport\": true,\n  \"transport_charge\": 500\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/students/edit/:id",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"students",
-								"edit",
-								":id"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "student-uuid-here"
-								}
-							]
-						},
-						"description": "Update student details. All fields are optional - only send fields you want to update. If uses_transport is false, transport_charge will be set to null automatically."
-					}
-				},
-				{
-					"name": "Delete Student",
-					"request": {
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/students/:id",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"students",
-								":id"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "student-uuid-here"
-								}
-							]
-						},
-						"description": "Delete a student by ID. This will also delete related records (fees, marks) due to cascade delete. Admin only."
-					}
-				}
-			]
-		},
-		{
-			"name": "Marks",
-			"item": [
-				{
-					"name": "Get Marks (Class & Section)",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/marks?class=1&section=A&terminal=First",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"marks"
-							],
-							"query": [
-								{
-									"key": "class",
-									"value": "1"
-								},
-								{
-									"key": "section",
-									"value": "A",
-									"description": "Section (optional)"
-								},
-								{
-									"key": "terminal",
-									"value": "First"
-								}
-							]
-						},
-						"description": "Get all students' marks for a class and section. Access: Admin & Teacher"
-					}
-				},
-				{
-					"name": "Submit Marks",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"class\": \"1\",\n  \"section\": \"A\",\n  \"terminal\": \"First\",\n  \"roll_no\": 1,\n  \"marks\": [\n    {\n      \"subject_name\": \"Hindi\",\n      \"external_marks\": 70,\n      \"internal_marks\": 18\n    },\n    {\n      \"subject_code\": \"ENG\",\n      \"external_marks\": 75,\n      \"internal_marks\": 19\n    }\n  ]\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/marks/submit",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"marks",
-								"submit"
-							]
-						},
-						"description": "Submit marks for a student using class, section, terminal, roll_no. Access: Admin & Teacher"
-					}
-				},
-				{
-					"name": "Edit Marks",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"class\": \"1\",\n  \"section\": \"A\",\n  \"terminal\": \"First\",\n  \"roll_no\": 1,\n  \"marks\": [\n    {\n      \"subject_name\": \"Hindi\",\n      \"external_marks\": 75,\n      \"internal_marks\": 19\n    },\n    {\n      \"subject_code\": \"ENG\",\n      \"external_marks\": 80,\n      \"internal_marks\": 20\n    }\n  ]\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/marks/edit",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"marks",
-								"edit"
-							]
-						},
-						"description": "Edit/Update existing marks for a student. Only updates marks that already exist. Use POST /api/marks/submit to add new marks. Access: Admin & Teacher"
-					}
-				},
-				{
-					"name": "Get Student Result (Public)",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/api/marks/result?class=1&roll=1&terminal=First&section=A",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"marks",
-								"result"
-							],
-							"query": [
-								{
-									"key": "class",
-									"value": "1",
-									"description": "Student's class"
-								},
-								{
-									"key": "roll",
-									"value": "1",
-									"description": "Roll number"
-								},
-								{
-									"key": "terminal",
-									"value": "First",
-									"description": "Terminal: First, Second, or Annual"
-								},
-								{
-									"key": "section",
-									"value": "A",
-									"description": "Section (optional)",
-									"disabled": false
-								}
-							]
-						},
-						"description": "Public endpoint - No authentication required. Students can view their results."
-					}
-				},
-				{
-					"name": "Publish Result (Class)",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"class\": \"1\",\n  \"section\": \"A\",\n  \"terminal\": \"First\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/marks/publish",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"marks",
-								"publish"
-							]
-					},
-					"description": "Publish results for entire class (and section if provided). Access: Admin Only"
-				}
-			}
-			]
-		},
-		{
-			"name": "Fee Structure Management",
-			"item": [
-				{
-					"name": "Create Fee Structure",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"class\": \"UKG\",\n  \"section\": \"B\",\n  \"tuition_fee\": 5000,\n  \"exam_fee\": 1200,\n  \"annual_fee\": 2500,\n  \"computer_fee\": 800\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/fee-structure",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"fee-structure"
-							]
-						},
-						"description": "Create fee structure entries. Supports two formats:\n1. Old format: { class, section?, tuition_fee, exam_fee, annual_fee, computer_fee } - Creates 4 entries (Tuition, Exam, Annual, Computer)\n2. New format: { class, section?, fee_name, fee_amount, is_optional? } - Creates single entry\nAccess: Admin Only"
-					}
-				},
-				{
-					"name": "Get Fee Structures",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/fee-structure?class=1&section=A",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"fee-structure"
-							],
-							"query": [
-								{
-									"key": "class",
-									"value": "1",
-									"description": "Optional: Filter by class"
-								},
-								{
-									"key": "section",
-									"value": "A",
-									"description": "Optional: Filter by section",
-									"disabled": true
-								}
-							]
-						},
-						"description": "Get fee structures with optional filters. Access: Admin Only"
-					}
-				},
-				{
-					"name": "Update Fee Structure",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"fee_amount\": 5500,\n  \"is_optional\": true\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/fee-structure/:id",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"fee-structure",
-								":id"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "fee-structure-uuid-here"
-								}
-							]
-						},
-						"description": "Update fee structure. Access: Admin Only"
-					}
-				},
-				{
-					"name": "Delete Fee Structure",
-					"request": {
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/fee-structure/:id",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"fee-structure",
-								":id"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "fee-structure-uuid-here"
-								}
-							]
-						},
-						"description": "Delete fee structure. Access: Admin Only"
-					}
-				}
-			]
-		},
-		{
-			"name": "Bulk Bill Generation",
-			"item": [
-				{
-					"name": "Generate Bulk Bills",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"class\": \"1\",\n  \"section\": \"A\",\n  \"month\": \"2024-01\",\n  \"includeAnnualFee\": true,\n  \"includeExamFee\": true,\n  \"includeComputerFee\": false,\n  \"includeOptionalFees\": true\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/billing/generate-bulk",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"billing",
-								"generate-bulk"
-							]
-						},
-						"description": "Generate bulk bills with checkbox options. Access: Admin Only"
-					}
-				},
-				{
-					"name": "Get Bill by ID",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/billing/bill/:id",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"billing",
-								"bill",
-								":id"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "bill-uuid-here"
-								}
-							]
-						},
-						"description": "Get a single bill by ID with items and payments. Access: Admin Only"
-					}
-				},
-				{
-					"name": "Download Bills PDF",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/billing/download?class=1&month=2024-01&section=A",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"billing",
-								"download"
-							],
-							"query": [
-								{
-									"key": "class",
-									"value": "1",
-									"description": "Class name (required)"
-								},
-								{
-									"key": "month",
-									"value": "2024-01",
-									"description": "Month in YYYY-MM format (required)"
-								},
-								{
-									"key": "section",
-									"value": "A",
-									"description": "Section (optional)",
-									"disabled": true
-								}
-							]
-						},
-						"description": "Download bills as PDF (4 bills per page). Access: Admin Only"
-					}
-				}
-			]
-		},
-		{
-			"name": "Fees Management",
-			"item": [
-				{
-					"name": "Get Fee List (Dashboard)",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/fees/list?class=1&section=A&month=2024-01",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"fees",
-								"list"
-							],
-							"query": [
-								{
-									"key": "class",
-									"value": "1",
-									"description": "Optional: Filter by class"
-								},
-								{
-									"key": "section",
-									"value": "A",
-									"description": "Optional: Filter by section",
-									"disabled": true
-								},
-								{
-									"key": "month",
-									"value": "2024-01",
-									"description": "Optional: Filter by month (YYYY-MM)",
-									"disabled": true
-								}
-							]
-						},
-						"description": "Get fee list for dashboard with all required columns. Access: Admin or Teacher"
-					}
-				},
-				{
-					"name": "Record Fee Payment",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"class\": \"1\",\n  \"section\": \"A\",\n  \"roll_number\": 1,\n  \"amount_paid\": 3000,\n  \"payment_mode\": \"cash\",\n  \"payment_date\": \"2024-01-22\",\n  \"month\": \"2024-01\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/fees/pay",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"fees",
-								"pay"
-							]
-						},
-						"description": "Record fee payment using class, section, and roll_number. If payment exceeds bill total, excess amount is automatically saved as advance in advance_ledger. Returns student details, bill_id, payment info, and advance details. Payment modes: cash, cheque, online, bank_transfer. Access: Admin Only"
-					}
-				},
-				{
-					"name": "Get Invoice Details",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/fees/invoice/:bill_id",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"fees",
-								"invoice",
-								":bill_id"
-							],
-							"variable": [
-								{
-									"key": "bill_id",
-									"value": "bill-uuid-here"
-								}
-							]
-						},
-						"description": "Get invoice details with items and payments. Access: Admin or Teacher"
-					}
-				},
-				{
-					"name": "Close Month",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"month\": \"2024-01\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/fees/close-month",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"fees",
-								"close-month"
-							]
-						},
-						"description": "Close a month and handle dues for unpaid fees. Prevents duplicate closing. Access: Admin Only"
-					}
-				},
-				{
-					"name": "Get Student Dues",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/fees/dues/:student_id",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"fees",
-								"dues",
-								":student_id"
-							],
-							"variable": [
-								{
-									"key": "student_id",
-									"value": "student-uuid-here"
-								}
-							]
-						},
-						"description": "Get dues for a student. Access: Admin or Teacher"
-					}
-				}
-			]
-		},
-		{
-			"name": "Invoice",
-			"item": [
-				{
-					"name": "Download Invoice PDF",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/invoice/download/:bill_id",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"invoice",
-								"download",
-								":bill_id"
-							],
-							"variable": [
-								{
-									"key": "bill_id",
-									"value": "bill-uuid-here"
-								}
-							]
-						},
-						"description": "Download professional invoice as PDF. Access: Admin or Teacher"
-					}
-				}
-			]
-		},
-		{
-			"name": "Bills",
-			"item": [
-				{
-					"name": "Generate Bills PDF",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/bills/pdf?month=2024-04",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"bills",
-								"pdf"
-							],
-							"query": [
-								{
-									"key": "month",
-									"value": "2024-04",
-									"description": "Month in YYYY-MM format (required)"
-								}
-							]
-						},
-						"description": "Generate PDF with all bills for a given month (4 bills per page). Access: Admin Only"
-					}
-				},
-				{
-					"name": "Generate Bills for Class",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"class\": \"1\",\n  \"month\": \"2024-04\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/bills/generate",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"bills",
-								"generate"
-							]
-						},
-						"description": "Generate bills for all students in a specific class for a given month. Body: { class, month (YYYY-MM) }. Access: Admin Only"
-					}
-				},
-				{
-					"name": "Generate Bills for All Classes",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"month\": \"2024-04\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/bills/generate-all",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"bills",
-								"generate-all"
-							]
-						},
-						"description": "Generate bills for all students in all classes for a given month. Body: { month (YYYY-MM) }. Access: Admin Only"
-					}
-				}
-			]
-		},
-		{
-			"name": "Results",
-			"item": [
-				{
-					"name": "Get Result (Public)",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/api/result?class=1&roll=1&terminal=First&section=A",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"result"
-							],
-							"query": [
-								{
-									"key": "class",
-									"value": "1",
-									"description": "Student's class (required)"
-								},
-								{
-									"key": "roll",
-									"value": "1",
-									"description": "Roll number (required)"
-								},
-								{
-									"key": "terminal",
-									"value": "First",
-									"description": "Terminal: First, Second, or Annual (required)"
-								},
-								{
-									"key": "section",
-									"value": "A",
-									"description": "Section (optional)",
-									"disabled": true
-								}
-							]
-						},
-						"description": "Public endpoint - No authentication required. Get student result by class, roll number, and terminal. Returns marks, percentage, division, and status."
-					}
-				}
-			]
-		},
-		{
-			"name": "Subjects",
-			"item": [
-				{
-					"name": "Create Subject",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"name\": \"Hindi\",\n  \"code\": \"HND\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/subjects",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"subjects"
-							]
-						},
-						"description": "Create a new subject (only name and code). Access: Admin Only"
-					}
-				},
-				{
-					"name": "Delete Subject (by ID)",
-					"request": {
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/subjects/:id",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"subjects",
-								":id"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "subject-uuid-here"
-								}
-							]
-						},
-						"description": "Delete a subject from the master subjects table by subject ID. This will cascade delete from class_subjects and marks tables. Access: Admin Only"
-					}
-				},
-				{
-					"name": "Delete Subject (by Name or Code)",
-					"request": {
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/subjects?subject_name=Hindi",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"subjects"
-							],
-							"query": [
-								{
-									"key": "subject_name",
-									"value": "Hindi",
-									"description": "Subject name OR use subject_code instead",
-									"disabled": false
-								},
-								{
-									"key": "subject_code",
-									"value": "",
-									"description": "Subject code (alternative to subject_name)",
-									"disabled": true
-								}
-							]
-						},
-						"description": "Delete a subject from the master subjects table by subject_name or subject_code. This will cascade delete from class_subjects and marks tables. Access: Admin Only"
-					}
-				},
-				{
-					"name": "Get All Subjects",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/subjects",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"subjects"
-							]
-						},
-						"description": "Get all available subjects (Master list - only id, name, code). Access: Admin & Teacher"
-					}
-				},
-				{
-					"name": "Get Class Subjects",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/subjects/class/:class?section=A",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"subjects",
-								"class",
-								":class"
-							],
-							"query": [
-								{
-									"key": "section",
-									"value": "A",
-									"description": "Section (optional)",
-									"disabled": true
-								}
-							],
-							"variable": [
-								{
-									"key": "class",
-									"value": "1"
-								}
-							]
-						},
-						"description": "Get subjects for a specific class. Access: Admin & Teacher"
-					}
-				},
-				{
-					"name": "Add Subject to Class",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-					"body": {
-						"mode": "raw",
-						"raw": "{\n  \"class\": \"1\",\n  \"subject_name\": \"Hindi\",\n  \"subject_code\": \"HND\",\n  \"section\": \"A\",\n  \"sequence\": 1\n}"
-					},
-						"url": {
-							"raw": "{{base_url}}/api/subjects/add",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"subjects",
-								"add"
-							]
-						},
-						"description": "Add an existing subject to a class and section. Subject must already exist in subjects table (created via POST /api/subjects). Body: { class, subject_name OR subject_code, section, sequence (optional) }. Section is mandatory. Access: Admin Only"
-					}
-				},
-				{
-					"name": "Add Multiple Subjects to Class",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-					"body": {
-						"mode": "raw",
-						"raw": "{\n  \"class\": \"1\",\n  \"section\": \"A\",\n  \"subjects\": [\n    {\n      \"subject_id\": \"uuid-1\"\n    },\n    {\n      \"subject_id\": \"uuid-2\"\n    }\n  ]\n}"
-					},
-						"url": {
-							"raw": "{{base_url}}/api/subjects/add-multiple",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"subjects",
-								"add-multiple"
-							]
-						},
-						"description": "Add multiple subjects to a class at once. Body: { class, section, subjects: [{ subject_id }] }. Class and section are mandatory. Access: Admin Only"
-					}
-				},
-				{
-					"name": "Remove Subject from Class (by ID)",
-					"request": {
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/subjects/remove/:id",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"subjects",
-								"remove",
-								":id"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "class-subject-uuid-here"
-								}
-							]
-						},
-						"description": "Remove subject from class by class_subjects id. Section is automatically included. Access: Admin Only"
-					}
-				},
-				{
-					"name": "Remove Subject from Class (by Class, Section & Subject Name/Code)",
-					"request": {
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/subjects/remove?class=1&section=A&subject_name=Hindi",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"subjects",
-								"remove"
-							],
-							"query": [
-								{
-									"key": "class",
-									"value": "1",
-									"description": "Class name"
-								},
-								{
-									"key": "section",
-									"value": "A",
-									"description": "Section (required)"
-								},
-								{
-									"key": "subject_name",
-									"value": "Hindi",
-									"description": "Subject name OR use subject_code instead"
-								}
-							]
-						},
-						"description": "Remove subject from class and section by class, section, and subject_name (or subject_code). Body: class, section, subject_name OR subject_code. Access: Admin Only"
-					}
-				},
-				{
-					"name": "Update Subject Sequence",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"sequence\": 2\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/subjects/sequence/:id",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"subjects",
-								"sequence",
-								":id"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "class-subject-uuid-here"
-								}
-							]
-						},
-						"description": "Update subject sequence in a class. Access: Admin Only"
-					}
-				}
-			]
-		},
-		{
-			"name": "MEGA Images",
-			"item": [
-				{
-					"name": "Upload Single Image",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "formdata",
-							"formdata": [
-								{
-									"key": "image",
-									"type": "file",
-									"src": ""
-								}
-							]
-						},
-						"url": {
-							"raw": "{{base_url}}/api/mega/images?public=false",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"mega",
-								"images"
-							],
-							"query": [
-								{
-									"key": "public",
-									"value": "false",
-									"description": "true = MEGA link will be returned. false = private (no link returned)."
-								}
-							]
-						},
-						"description": "Upload a single image to MEGA.\n\nNo folderId required (server stores under configured MEGA folder paths).\n\nMultipart field name: `image` (also accepts `file`)."
-					}
-				},
-				{
-					"name": "Upload Bulk Images",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "formdata",
-							"formdata": [
-								{
-									"key": "images",
-									"type": "file",
-									"src": ""
-								}
-							]
-						},
-						"url": {
-							"raw": "{{base_url}}/api/mega/images/bulk?public=false",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"mega",
-								"images",
-								"bulk"
-							],
-							"query": [
-								{
-									"key": "public",
-									"value": "false",
-									"description": "true = MEGA links returned for each file. false = private uploads (url will be null)."
-								}
-							]
-						},
-						"description": "Upload multiple images to MEGA.\n\nMultipart field name: `images` (multiple). Also accepts multiple `image` fields."
-					}
-				},
-				{
-					"name": "List Images (with link)",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/mega/images?public=false&includeLinks=true",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"mega",
-								"images"
-							],
-							"query": [
-								{
-									"key": "public",
-									"value": "false",
-									"description": "false = list private folder, true = list public folder"
-								},
-								{
-									"key": "includeLinks",
-									"value": "true",
-									"description": "true = generate/return links. false = faster list without links."
-								}
-							]
-						},
-						"description": "List images stored in MEGA folder (public/private). Returns nodeId and url (if includeLinks=true)."
-					}
-				},
-				{
-					"name": "Delete Image",
-					"request": {
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/mega/images/:nodeId",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"mega",
-								"images",
-								":nodeId"
-							],
-							"variable": [
-								{
-									"key": "nodeId",
-									"value": "paste-nodeId-here"
-								}
-							]
-						},
-						"description": "Delete an image from MEGA by nodeId (you get nodeId from upload/list APIs)."
-					}
-				}
-			]
-		}
-	],
-	"variable": [
-		{
-			"key": "base_url",
-			"value": "http://localhost:5000",
-			"type": "string"
-		},
-		{
-			"key": "access_token",
-			"value": "",
-			"type": "string"
-		},
-		{
-			"key": "refresh_token",
-			"value": "",
-			"type": "string"
-		}
-	]
+    "info": {
+        "_postman_id": "school-management-backend-api",
+        "name": "School Management Backend API",
+        "description": "Complete API collection for School Management System Backend\n\n**Authentication:**\n- Uses Supabase JWT token authentication\n- Token expires after 30 minutes\n- Login automatically saves access_token and refresh_token\n- Logout invalidates token at Supabase level\n- All protected APIs require Authorization header: Bearer {{access_token}}\n\n**Public APIs:**\n- GET /api/results - Get student result (no auth required)\n- GET /api/marks/result - Get student result (no auth required)\n\n**Protected APIs:**\n- All other APIs require authentication\n- Admin only: Fees, Bills, Invoice, Subject management, User management\n- Admin & Teacher: Students, Marks, Subjects (read)",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Authentication",
+            "item": [
+                {
+                    "name": "Login",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    const response = pm.response.json();",
+                                    "    if (response.session && response.session.access_token) {",
+                                    "        pm.collectionVariables.set('access_token', response.session.access_token);",
+                                    "        console.log('✅ Access token saved to collection variable');",
+                                    "    }",
+                                    "    if (response.session && response.session.refresh_token) {",
+                                    "        pm.collectionVariables.set('refresh_token', response.session.refresh_token);",
+                                    "        console.log('✅ Refresh token saved to collection variable');",
+                                    "    }",
+                                    "    if (response.token_info) {",
+                                    "        console.log('⏰ Token expires at:', response.token_info.expires_at);",
+                                    "        console.log('⏰ Token expires in:', response.token_info.expires_in, 'seconds (30 minutes)');",
+                                    "    }",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"ta2nfeez@gmail.com\",\n  \"password\": \"Tanfeez@1\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/auth/login",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "login"
+                            ]
+                        },
+                        "description": "Login and automatically save access_token and refresh_token. After login, all protected APIs will use this token. Token expires after 30 minutes. Uses Supabase authentication."
+                    }
+                },
+                {
+                    "name": "Create User (Admin/Teacher)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"teacher@example.com\",\n  \"password\": \"Teacher@123\",\n  \"role\": \"teacher\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/auth/create-user",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "create-user"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Forgot Password",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"user@example.com\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/auth/forgot-password",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "forgot-password"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Reset Password",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"user@example.com\",\n  \"newPassword\": \"NewPassword@123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/auth/reset-password",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "reset-password"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get All Users",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/auth/users",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "users"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Remove User",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/auth/remove-user/:id",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "remove-user",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "user-uuid-here"
+                                }
+                            ]
+                        },
+                        "description": "Remove a user (admin or teacher). Requires admin authentication."
+                    }
+                },
+                {
+                    "name": "Logout",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/auth/logout",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "logout"
+                            ]
+                        },
+                        "description": "Logout the current user (admin or teacher). Invalidates the access token at Supabase level. After logout, all protected APIs will be blocked. Only public result APIs will work."
+                    }
+                },
+                {
+                    "name": "Refresh Token",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    const response = pm.response.json();",
+                                    "    if (response.session && response.session.access_token) {",
+                                    "        pm.collectionVariables.set('access_token', response.session.access_token);",
+                                    "        console.log('✅ New access token saved');",
+                                    "    }",
+                                    "    if (response.session && response.session.refresh_token) {",
+                                    "        pm.collectionVariables.set('refresh_token', response.session.refresh_token);",
+                                    "        console.log('✅ New refresh token saved');",
+                                    "    }",
+                                    "    if (response.token_info) {",
+                                    "        console.log('⏰ Token expires at:', response.token_info.expires_at);",
+                                    "    }",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/auth/refresh",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "refresh"
+                            ]
+                        },
+                        "description": "Refresh the access token using refresh_token from login response. Use this before token expires (30 minutes). Returns new access_token and refresh_token. Automatically saves new tokens to collection variables."
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Students",
+            "item": [
+                {
+                    "name": "Get All Students Details",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/students/all?class=",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "students",
+                                "all"
+                            ],
+                            "query": [
+                                {
+                                    "key": "class",
+                                    "value": "",
+                                    "description": "Optional: Filter by class (e.g., '1', '4'). Leave empty to get all classes."
+                                }
+                            ]
+                        },
+                        "description": "Get all students details from all classes. Returns: Name, Father, Class, Section, Roll, Mobile, Address. Optional class filter available."
+                    }
+                },
+                {
+                    "name": "Get Students by Class",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/students?class=1",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "students"
+                            ],
+                            "query": [
+                                {
+                                    "key": "class",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Get students by specific class (for bulk bill generation). Includes previous_due amount."
+                    }
+                },
+                {
+                    "name": "Add New Student",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"John Doe\",\n  \"father_name\": \"Father Name\",\n  \"mother_name\": \"Mother Name\",\n  \"gender\": \"Male\",\n  \"class\": \"1\",\n  \"roll_no\": 1,\n  \"section\": \"A\",\n  \"mobile\": \"1234567890\",\n  \"address\": \"Student Address\",\n  \"uses_transport\": false,\n  \"transport_charge\": null\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/students/add",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "students",
+                                "add"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Student",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"John Doe Updated\",\n  \"father_name\": \"Father Name\",\n  \"mother_name\": \"Mother Name\",\n  \"gender\": \"Male\",\n  \"mobile\": \"1234567890\",\n  \"address\": \"Updated Address\",\n  \"class\": \"1\",\n  \"roll_no\": 1,\n  \"section\": \"A\",\n  \"uses_transport\": true,\n  \"transport_charge\": 500\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/students/edit/:id",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "students",
+                                "edit",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "student-uuid-here"
+                                }
+                            ]
+                        },
+                        "description": "Update student details. All fields are optional - only send fields you want to update. If uses_transport is false, transport_charge will be set to null automatically."
+                    }
+                },
+                {
+                    "name": "Delete Student",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/students/:id",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "students",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "student-uuid-here"
+                                }
+                            ]
+                        },
+                        "description": "Delete a student by ID. This will also delete related records (fees, marks) due to cascade delete. Admin only."
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Marks",
+            "item": [
+                {
+                    "name": "Get Marks (Class & Section)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/marks?class=1&section=A&terminal=First",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "marks"
+                            ],
+                            "query": [
+                                {
+                                    "key": "class",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "section",
+                                    "value": "A",
+                                    "description": "Section (optional)"
+                                },
+                                {
+                                    "key": "terminal",
+                                    "value": "First"
+                                }
+                            ]
+                        },
+                        "description": "Get all students' marks for a class and section. Access: Admin & Teacher"
+                    }
+                },
+                {
+                    "name": "Submit Marks",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"class\": \"1\",\n  \"section\": \"A\",\n  \"terminal\": \"First\",\n  \"roll_no\": 1,\n  \"marks\": [\n    {\n      \"subject_name\": \"Hindi\",\n      \"external_marks\": 70,\n      \"internal_marks\": 18\n    },\n    {\n      \"subject_code\": \"ENG\",\n      \"external_marks\": 75,\n      \"internal_marks\": 19\n    }\n  ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/marks/submit",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "marks",
+                                "submit"
+                            ]
+                        },
+                        "description": "Submit marks for a student using class, section, terminal, roll_no. Access: Admin & Teacher"
+                    }
+                },
+                {
+                    "name": "Edit Marks",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"class\": \"1\",\n  \"section\": \"A\",\n  \"terminal\": \"First\",\n  \"roll_no\": 1,\n  \"marks\": [\n    {\n      \"subject_name\": \"Hindi\",\n      \"external_marks\": 75,\n      \"internal_marks\": 19\n    },\n    {\n      \"subject_code\": \"ENG\",\n      \"external_marks\": 80,\n      \"internal_marks\": 20\n    }\n  ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/marks/edit",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "marks",
+                                "edit"
+                            ]
+                        },
+                        "description": "Edit/Update existing marks for a student. Only updates marks that already exist. Use POST /api/marks/submit to add new marks. Access: Admin & Teacher"
+                    }
+                },
+                {
+                    "name": "Get Student Result (Public)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/marks/result?class=1&roll=1&terminal=First&section=A",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "marks",
+                                "result"
+                            ],
+                            "query": [
+                                {
+                                    "key": "class",
+                                    "value": "1",
+                                    "description": "Student's class"
+                                },
+                                {
+                                    "key": "roll",
+                                    "value": "1",
+                                    "description": "Roll number"
+                                },
+                                {
+                                    "key": "terminal",
+                                    "value": "First",
+                                    "description": "Terminal: First, Second, or Annual"
+                                },
+                                {
+                                    "key": "section",
+                                    "value": "A",
+                                    "description": "Section (optional)",
+                                    "disabled": false
+                                }
+                            ]
+                        },
+                        "description": "Public endpoint - No authentication required. Students can view their results."
+                    }
+                },
+                {
+                    "name": "Publish Result (Class)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"class\": \"1\",\n  \"section\": \"A\",\n  \"terminal\": \"First\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/marks/publish",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "marks",
+                                "publish"
+                            ]
+                        },
+                        "description": "Publish results for entire class (and section if provided). Access: Admin Only"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Fee Structure Management",
+            "item": [
+                {
+                    "name": "Create Fee Structure",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "// Single normalized row (first-time for class):\n{\n  \"class\": \"UKG\",\n  \"fee_name\": \"Tuition Fee\",\n  \"fee_amount\": 5000,\n  \"period\": \"monthly\",\n  \"late_fine_enabled\": true,\n  \"is_optional\": false\n}\n\n// Bulk normalized array (supported for initial create; all items must belong to same class):\n[\n  { \"class\": \"LKG\", \"fee_name\": \"Tuition Fee\",  \"fee_amount\": 5000, \"period\": \"monthly\", \"late_fine_enabled\": true,  \"is_optional\": false },\n  { \"class\": \"LKG\", \"fee_name\": \"Exam Fee\",     \"fee_amount\": 1500, \"period\": \"monthly\", \"late_fine_enabled\": false, \"is_optional\": true },\n  { \"class\": \"LKG\", \"fee_name\": \"Annual Fee\",   \"fee_amount\": 8000, \"period\": \"yearly\",  \"late_fine_enabled\": false, \"is_optional\": true },\n  { \"class\": \"LKG\", \"fee_name\": \"Computer Fee\", \"fee_amount\": 1200, \"period\": \"monthly\", \"late_fine_enabled\": true,  \"is_optional\": true }\n]\n\n// Legacy bulk (alternate format - also supported):\n// { \"class\": \"UKG\", \"tuition_fee\": 5000, \"exam_fee\": 1200, \"annual_fee\": 300, \"computer_fee\": 0 }\n\n// Notes: section is ignored for fee structures; CREATE will fail if the class already has fee rows (use UPDATE or DELETE). Allowed periods: monthly, yearly."
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/fee-structure",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "fee-structure"
+                            ]
+                        },
+                        "description": "Create fee-structure entries (one-time per class).\nBehavior: section is ignored — fee rules are per-class. If a class already has fee rows, CREATE requests will be rejected (400). Use UPDATE to change amounts or DELETE to remove and recreate.\nSupported payloads:\n- Legacy bulk (recommended for initial setup): { class, tuition_fee, exam_fee, annual_fee, computer_fee }\n- Normalized single-row (allowed only on first-time creation): { class, fee_name (Tuition Fee|Exam Fee|Annual Fee|Computer Fee), fee_amount, period?, is_optional?, late_fine_enabled? }\n- Bulk normalized array (allowed only on first-time creation): [{ class, fee_name, fee_amount, period?, is_optional?, late_fine_enabled? }, ...] (all array items must belong to same class)\nNotes: Allowed periods: monthly, yearly. Access: Admin Only."
+                    }
+                },
+                {
+                    "name": "Get Fee Structures",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/fee-structure?class=1",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "fee-structure"
+                            ],
+                            "query": [
+                                {
+                                    "key": "class",
+                                    "value": "1",
+                                    "description": "Optional: Filter by class (section is ignored)"
+                                }
+                            ]
+                        },
+                        "description": "Get fee structures (section is ignored). Access: Admin Only"
+                    }
+                },
+                {
+                    "name": "Update Fee Structure",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"fee_amount\": 5500,\n  \"is_optional\": true\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/fee-structure/:id",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "fee-structure",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "fee-structure-uuid-here"
+                                }
+                            ]
+                        },
+                        "description": "Update fee structure. Access: Admin Only"
+                    }
+                },
+                {
+                    "name": "Delete Fee Structure",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/fee-structure/:id",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "fee-structure",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "fee-structure-uuid-here"
+                                }
+                            ]
+                        },
+                        "description": "Delete fee structure. Access: Admin Only"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Bulk Bill Generation",
+            "item": [
+                {
+                    "name": "Generate Bulk Bills",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"class\": \"1\",\n  \"section\": \"A\",\n  \"month\": \"2024-01\",\n  \"includeAnnualFee\": true,\n  \"includeExamFee\": true,\n  \"includeComputerFee\": true,\n  \"includeOptionalFees\": true\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/bills/generate",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "billing",
+                                "generate-bulk"
+                            ]
+                        },
+                        "description": "Generate bulk bills with checkbox options. Previous dues are included in generated bill totals. Advances are NOT auto-applied as payments during generation; however `net_payable` on generated bills will subtract active advances for display. To consume an advance record an explicit payment with payment_mode='advance_adjustment'. Access: Admin Only"
+                    }
+                },
+                {
+                    "name": "Get Bill by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/fees/invoice/:bill_id",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "billing",
+                                "bill",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "bill-uuid-here"
+                                }
+                            ]
+                        },
+                        "description": "Get a single bill by ID with items and payments. Access: Admin Only"
+                    }
+                },
+                {
+                    "name": "Download Bills PDF",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/bills/pdf?class=1&month=2024-01&section=A",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "billing",
+                                "download"
+                            ],
+                            "query": [
+                                {
+                                    "key": "class",
+                                    "value": "1",
+                                    "description": "Class name (required)"
+                                },
+                                {
+                                    "key": "month",
+                                    "value": "2024-01",
+                                    "description": "Month in YYYY-MM format (required)"
+                                },
+                                {
+                                    "key": "section",
+                                    "value": "A",
+                                    "description": "Section (optional)",
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "event": [
+                            {
+                                "listen": "test",
+                                "script": {
+                                    "exec": [
+                                        "pm.test('Status code is 200', function () {",
+                                        "    pm.response.to.have.status(200);",
+                                        "});",
+                                        "pm.test('Response is a PDF', function () {",
+                                        "    pm.expect(pm.response.headers.get('content-type')).to.include('application/pdf');",
+                                        "});",
+                                        "pm.test('Content-Disposition contains bills-', function () {",
+                                        "    pm.expect(pm.response.headers.get('content-disposition') || '').to.include('bills-');",
+                                        "});"
+                                    ],
+                                    "type": "text/javascript"
+                                }
+                            }
+                        ],
+                        "description": "Download bills as PDF (4 bills per page). This PDF is generated from `fees` records (breakdown included). Access: Admin Only"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Fees Management",
+            "item": [
+                {
+                    "name": "Get Fee List (Dashboard)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/fees/list?class=1&section=A&month=2024-01",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "fees",
+                                "list"
+                            ],
+                            "query": [
+                                {
+                                    "key": "class",
+                                    "value": "1",
+                                    "description": "Optional: Filter by class"
+                                },
+                                {
+                                    "key": "section",
+                                    "value": "A",
+                                    "description": "Optional: Filter by section",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "month",
+                                    "value": "2024-01",
+                                    "description": "Optional: Filter by month (YYYY-MM)",
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "event": [
+                            {
+                                "listen": "test",
+                                "script": {
+                                    "exec": [
+                                        "pm.test('Status code is 200', function () {",
+                                        "    pm.response.to.have.status(200);",
+                                        "});",
+                                        "const json = pm.response.json();",
+                                        "pm.test('Response has message and data', function () {",
+                                        "    pm.expect(json).to.have.property('message');",
+                                        "    pm.expect(json).to.have.property('data');",
+                                        "    pm.expect(json.data).to.be.an('array');",
+                                        "});",
+                                        "pm.test('Each item has net_payable and matches calculation (advances subtracted)', function () {",
+                                        "    json.data.forEach(item => {",
+                                        "        pm.expect(item).to.have.property('net_payable');",
+                                        "        const outstandingFromFees = Math.max(0, (parseFloat(item.total_fee || 0) - parseFloat(item.total_paid || 0)));",
+                                        "        const outstandingFromDues = Math.max(0, parseFloat(item.dues || 0));",
+                                        "        const additionalDues = Math.max(0, outstandingFromDues - outstandingFromFees);",
+                                        "        const expected = Math.max(0, outstandingFromFees + additionalDues - (parseFloat(item.advance || 0) || 0));",
+                                        "        pm.expect(parseFloat(item.net_payable)).to.eql(parseFloat(expected.toFixed(2)));",
+                                        "        pm.expect(item).to.have.property('bill_id');",
+                                        "        pm.expect(item.bill_items).to.be.an('array');",
+                                        "    });",
+                                        "});"
+                                    ],
+                                    "type": "text/javascript"
+                                }
+                            }
+                        ],
+                        "response": [
+                            {
+                                "name": "Example successful response",
+                                "status": "OK",
+                                "code": 200,
+                                "body": "{\n  \"message\": \"Fee list fetched successfully\",\n  \"data\": [\n    {\n      \"student_id\": \"student-uuid-1\",\n      \"student_name\": \"John Doe\",\n      \"father_name\": \"Father Name\",\n      \"roll_no\": 1,\n      \"class\": \"LKG\",\n      \"section\": \"A\",\n      \"bill_id\": \"bill-uuid-1\",\n      \"month\": \"2026-03\",\n      \"bill_status\": \"unpaid\",\n      \"tuition_fee\": 3000,\n      \"exam_fee\": 500,\n      \"annual_fee\": 0,\n      \"computer_fee\": 200,\n      \"transport_fee\": 1000,\n      \"previous_due\": 2000,\n      \"total_fee\": 6700,\n      \"total_paid\": 3000,\n      \"net_payable\": 3700\n    }\n  ],\n  \"count\": 1\n}"
+                            }
+                        ],
+                        "description": "Get fee list for dashboard. Returns fields: student_id, student_name, father_name, roll_no, class, section, total_fee, total_paid, dues, advance, net_payable (computed). net_payable calculation avoids double-counting previous dues and subtracts active advances when present (advances remain ledger entries and are consumed only when payments are recorded). Query params: class (optional), section (optional), month (optional, YYYY-MM). Access: Admin or Teacher"
+                    }
+                },
+                {
+                    "name": "Record Fee Payment",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"class\": \"1\",\n  \"section\": \"A\",\n  \"roll_number\": 1,\n  \"amount_paid\": 3000,\n  \"payment_mode\": \"cash\",\n  \"payment_date\": \"2024-01-22\",\n  \"month\": \"2024-01\",\n  \"transaction_id\": \"txn-{{unique_id}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/fees/pay",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "fees",
+                                "pay"
+                            ]
+                        },
+                        "description": "Record fee payment using class, section, and roll_number. Requires: class, section, roll_number, amount_paid, payment_mode, payment_date, month. Overpayments automatically create advance_ledger entries. Underpayments do NOT create previous_dues — run POST /api/fees/close-month to record dues. Payment is processed atomically via fn_process_payment. Optional transaction_id supports idempotency. Returns payment details and status. Access: Admin Only.\nPayment modes: cash, upi, online, cheque, bank_transfer, advance, advance_adjustment, dues_adjustment, adjustment.",
+                        "event": [
+                            {
+                                "listen": "test",
+                                "script": {
+                                    "exec": [
+                                        "pm.test('Payment recorded (200)', () => pm.response.to.have.status(200));",
+                                        "const json = pm.response.json();",
+                                        "pm.test('response contains payment object', () => pm.expect(json).to.have.property('payment'));",
+                                        "pm.test('receipt_no exists', () => pm.expect(json.payment.receipt_no || json.payment.receipt).to.not.be.undefined);",
+                                        "if (json.bill_id) pm.collectionVariables.set('last_bill_id', json.bill_id);",
+                                        "if (json.student_id) pm.collectionVariables.set('last_student_id', json.student_id);",
+                                        "if (json.payment && json.payment.receipt_no) pm.collectionVariables.set('last_receipt_no', json.payment.receipt_no);",
+                                        "console.log('Saved last_bill_id, last_student_id, last_receipt_no for chained tests');"
+                                    ],
+                                    "type": "text/javascript"
+                                }
+                            }
+                        ]
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "const code = pm.response.code;",
+                                    "if (code === 404) {",
+                                    "  const j = pm.response.json();",
+                                    "  pm.test('404 - Bill not generated for this month', function() {",
+                                    "    pm.expect(j).to.have.property('message');",
+                                    "    pm.expect(j.message).to.eql('Bill not generated for this month');",
+                                    "  });",
+                                    "} else {",
+                                    "  pm.test('Status is 200', function(){ pm.response.to.have.status(200); });",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Get Invoice Details",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/fees/invoice/:bill_id",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "fees",
+                                "invoice",
+                                ":bill_id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "bill_id",
+                                    "value": "bill-uuid-here"
+                                }
+                            ]
+                        },
+                        "event": [
+                            {
+                                "listen": "test",
+                                "script": {
+                                    "exec": [
+                                        "pm.test('Status code is 200', function () {",
+                                        "    pm.response.to.have.status(200);",
+                                        "});",
+                                        "const json = pm.response.json();",
+                                        "pm.test('Invoice has correct shape', function () {",
+                                        "    pm.expect(json).to.have.property('message');",
+                                        "    pm.expect(json).to.have.property('invoice');",
+                                        "    pm.expect(json.invoice).to.have.property('total_amount');",
+                                        "    pm.expect(json.invoice).to.have.property('total_paid');",
+                                        "    pm.expect(json.invoice.items).to.be.an('array');",
+                                        "    const sumPayments = (json.invoice.payments || []).reduce((s, p) => s + (p.amount_paid || 0), 0);",
+                                        "    pm.expect(parseFloat(json.invoice.total_paid)).to.eql(parseFloat(sumPayments));",
+                                        "});",
+                                        "pm.test('If net_payable provided, matches calculation (dues-only; advances not auto-applied)', function () {",
+                                        "    if (json.invoice.net_payable !== undefined) {",
+                                        "        const outstanding = Math.max(0, parseFloat(json.invoice.total_amount || 0) - parseFloat(json.invoice.total_paid || 0));",
+                                        "        const expected = Math.max(0, outstanding + (parseFloat(json.invoice.dues || 0) - Math.max(0, outstanding)));",
+                                        "        pm.expect(parseFloat(json.invoice.net_payable)).to.eql(parseFloat(expected.toFixed(2)));",
+                                        "    }",
+                                        "});"
+                                    ],
+                                    "type": "text/javascript"
+                                }
+                            }
+                        ],
+                        "description": "Get invoice details with items and payments. Supports both `fee_bills` and legacy `fees` records. `net_payable` will reflect outstanding minus active advances when present; advances are still shown separately and are consumed only when payments are recorded. Access: Admin or Teacher",
+                        "response": [
+                            {
+                                "name": "Example invoice response (fee_bills format)",
+                                "status": "OK",
+                                "code": 200,
+                                "body": "{\n  \"message\": \"Invoice fetched successfully\",\n  \"invoice\": {\n    \"bill_id\": \"bill-uuid-1\",\n    \"invoice_number\": \"INV-BILLUUID\",\n    \"date\": \"2026-03-01T10:00:00Z\",\n    \"month\": \"2026-03\",\n    \"student\": {\n      \"id\": \"student-uuid-1\",\n      \"name\": \"John Doe\",\n      \"father_name\": \"Father Name\",\n      \"roll_no\": 1,\n      \"class\": \"LKG\",\n      \"section\": \"A\"\n    },\n    \"items\": [\n      { \"fee_name\": \"Tuition Fee\", \"amount\": 3000, \"created_at\": \"2026-03-01T10:00:00Z\" },\n      { \"fee_name\": \"Exam Fee\", \"amount\": 500, \"created_at\": \"2026-03-01T10:00:00Z\" },\n      { \"fee_name\": \"Previous Due\", \"amount\": 2000, \"created_at\": \"2026-03-01T10:00:00Z\" },\n      { \"fee_name\": \"Transport Fee\", \"amount\": 1000, \"created_at\": \"2026-03-01T10:00:00Z\" }\n    ],\n    \"payments\": [\n      { \"id\": \"payment-1\", \"amount_paid\": 3000, \"payment_mode\": \"cash\", \"payment_date\": \"2026-03-05\", \"receipt_no\": \"REC-001\", \"created_at\": \"2026-03-05T10:00:00Z\" }\n    ],\n    \"summary\": {\n      \"total_amount\": 6500,\n      \"total_paid\": 3000,\n      \"advance_used\": 0,\n      \"total_paid_including_advance\": 3000,\n      \"remaining\": 3500,\n      \"active_advance_balance\": 500,\n      \"status\": \"partial\"\n    }\n  }\n}"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "Close Month",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"month\": \"2024-01\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/fees/close-month",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "fees",
+                                "close-month"
+                            ]
+                        },
+                        "event": [
+                            {
+                                "listen": "test",
+                                "script": {
+                                    "exec": [
+                                        "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                                        "const json = pm.response.json();",
+                                        "pm.test('response has required fields', () => {",
+                                        "  pm.expect(json).to.have.property('message');",
+                                        "  pm.expect(json.message).to.include('closed');",
+                                        "});",
+                                        "pm.test('response includes counts', () => {",
+                                        "  pm.expect(json.message).to.match(/\\d+ dues created/);",
+                                        "  pm.expect(json.message).to.match(/\\d+ bills updated/);",
+                                        "});"
+                                    ],
+                                    "type": "text/javascript"
+                                }
+                            }
+                        ],
+                        "description": "Close a month and handle dues for unpaid fees. Records month_closures entry and creates previous_dues for unpaid bills (the ONLY place where previous_dues rows are created). Updates bill status and net_payable. DB-level triggers may apply fines. Payments do NOT create previous_dues. Prevents duplicate closing. Returns created dues count and updated bills count. Access: Admin Only."
+                    }
+                },
+                {
+                    "name": "Get Student Dues",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/fees/dues/:student_id",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "fees",
+                                "dues",
+                                ":student_id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "student_id",
+                                    "value": "student-uuid-here"
+                                }
+                            ]
+                        },
+                        "event": [
+                            {
+                                "listen": "test",
+                                "script": {
+                                    "exec": [
+                                        "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                                        "const json = pm.response.json();",
+                                        "pm.test('Response has required fields', () => {",
+                                        "  pm.expect(json).to.have.property('message');",
+                                        "  pm.expect(json).to.have.property('total_dues');",
+                                        "  pm.expect(json).to.have.property('dues');",
+                                        "  pm.expect(json).to.have.property('count');",
+                                        "  pm.expect(json.dues).to.be.an('array');",
+                                        "});",
+                                        "pm.test('Total dues matches sum of individual dues', () => {",
+                                        "  const sum = json.dues.reduce((s, d) => s + (d.remaining_due || 0), 0);",
+                                        "  pm.expect(parseFloat(json.total_dues)).to.equal(parseFloat(sum.toFixed(2)));",
+                                        "});"
+                                    ],
+                                    "type": "text/javascript"
+                                }
+                            }
+                        ],
+                        "response": [
+                            {
+                                "name": "Example response with dues",
+                                "status": "OK",
+                                "code": 200,
+                                "body": "{\n  \"message\": \"Dues fetched successfully\",\n  \"student_id\": \"student-uuid-1\",\n  \"total_dues\": 5000,\n  \"dues\": [\n    {\n      \"id\": \"due-uuid-1\",\n      \"student_id\": \"student-uuid-1\",\n      \"from_month\": \"2026-01\",\n      \"month\": \"2026-01\",\n      \"original_due\": 3000,\n      \"remaining_due\": 3000,\n      \"status\": \"pending\",\n      \"cleared\": false\n    },\n    {\n      \"id\": \"due-uuid-2\",\n      \"student_id\": \"student-uuid-1\",\n      \"from_month\": \"2026-02\",\n      \"month\": \"2026-02\",\n      \"original_due\": 2000,\n      \"remaining_due\": 2000,\n      \"status\": \"pending\",\n      \"cleared\": false\n    }\n  ],\n  \"count\": 2\n}",
+                                "_postman_previewlanguage": "json",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ]
+                            }
+                        ],
+                        "description": "Get all pending and uncleared dues for a student. Returns total dues and detailed list of individual due records from previous months that were created during month closure. User must be Admin or Teacher."
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Invoice",
+            "item": [
+                {
+                    "name": "Download Invoice PDF",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/invoice/download/:bill_id",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "invoice",
+                                "download",
+                                ":bill_id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "bill_id",
+                                    "value": "bill-uuid-here"
+                                }
+                            ]
+                        },
+                        "event": [
+                            {
+                                "listen": "test",
+                                "script": {
+                                    "exec": [
+                                        "pm.test('Status code is 200', function () {",
+                                        "    pm.response.to.have.status(200);",
+                                        "});",
+                                        "pm.test('Response is a PDF', function () {",
+                                        "    pm.expect(pm.response.headers.get('content-type')).to.include('application/pdf');",
+                                        "});",
+                                        "pm.test('Content-Disposition contains invoice identifier', function () {",
+                                        "    pm.expect(pm.response.headers.get('content-disposition') || '').to.include('invoice-');",
+                                        "});"
+                                    ],
+                                    "type": "text/javascript"
+                                }
+                            }
+                        ],
+                        "description": "Download professional invoice as PDF. Supports both `fee_bills` id and legacy `fees` id. Access: Admin or Teacher"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Bills",
+            "item": [
+                {
+                    "name": "Download Bills Data",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/bills/download-data?month=2026-03&class=LKG",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "bills",
+                                "download-data"
+                            ],
+                            "query": [
+                                {
+                                    "key": "month",
+                                    "value": "2026-03",
+                                    "description": "Month in YYYY-MM format (required)"
+                                },
+                                {
+                                    "key": "class",
+                                    "value": "LKG",
+                                    "description": "Class name (optional, filters bills by class)"
+                                }
+                            ]
+                        },
+                        "description": "Fetch complete bill data for a given month with optional class filter. Returns bills with items, advance deductions, and payment summary. **Advance Handling:** Active advances in ledger are AUTOMATICALLY applied during bill generation in FIFO order. Advance adjustments reduce net_payable and are shown as negative line items. Fully consumed advances are marked as 'used', partially consumed remain 'active' with reduced amount. Response includes bill_id, student details, fee items breakdown (tuition, exam, annual, computer, transport, previous due, advance adjustment), and summary (total_amount, advance_used, net_payable, status). Access: Admin Only",
+                        "event": [
+                            {
+                                "listen": "test",
+                                "script": {
+                                    "exec": [
+                                        "const code = pm.response.code;",
+                                        "const json = pm.response.json();",
+                                        "if (code === 404) {",
+                                        "  pm.test('404 - No bills found', function () {",
+                                        "    pm.expect(json).to.have.property('message');",
+                                        "  });",
+                                        "} else {",
+                                        "  pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                                        "  pm.test('Response is JSON', function () { pm.expect(pm.response.headers.get('content-type')).to.include('application/json'); });",
+                                        "  pm.test('Response has required structure', function () {",
+                                        "    pm.expect(json).to.have.property('month');",
+                                        "    pm.expect(json).to.have.property('class');",
+                                        "    pm.expect(json).to.have.property('totalBills');",
+                                        "    pm.expect(json).to.have.property('bills');",
+                                        "    pm.expect(json.bills).to.be.an('array');",
+                                        "  });",
+                                        "  if (json.bills && json.bills.length > 0) {",
+                                        "    pm.test('Each bill has required fields', function () {",
+                                        "      const bill = json.bills[0];",
+                                        "      pm.expect(bill).to.have.property('bill_id');",
+                                        "      pm.expect(bill).to.have.property('student');",
+                                        "      pm.expect(bill).to.have.property('month');",
+                                        "      pm.expect(bill).to.have.property('items');",
+                                        "      pm.expect(bill).to.have.property('summary');",
+                                        "    });",
+                                        "  }",
+                                        "}"
+                                    ],
+                                    "type": "text/javascript"
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "Generate Bills for Class",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"class\": \"LKG\",\n  \"month\": \"2026-03\",\n  \"include_exam_fee\": true,\n  \"include_annual_fee\": true,\n  \"include_computer_fee\": true\n}\n\n// Note: controller reads normalized fee rows from `fee_structures` (one row per fee type for the class)."
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/bills/generate",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "bills",
+                                "generate"
+                            ]
+                        },
+                        "description": "Generate bills for all students in a class for a given month. **Advance Handling (FIFO):** Automatically scans for active advances in ledger and applies them in order created. Fully consumed advances are marked status='used', partially consumed remain status='active' with reduced amount. **Bill Calculation:** total_amount = tuition + optional fees + transport + previous dues. net_payable = total_amount - advance_used. **Bill Items:** Includes tuition, optional exam/annual/computer fees, transport (if enabled), previous dues, and advance adjustment (shown as negative). **Bill Status:** set to 'paid' if net_payable=0, 'partial' if advance applied, 'unpaid' otherwise. Returns { message, month, successCount, errorCount }. Closed months are prevented. Access: Admin only.",
+                        "event": [
+                            {
+                                "listen": "test",
+                                "script": {
+                                    "exec": [
+                                        "const code = pm.response.code;",
+                                        "const json = (pm.response.text() && pm.response.headers.get('content-type') && pm.response.headers.get('content-type').includes('application/json')) ? pm.response.json() : {};",
+                                        "if (code === 400 || code === 404) {",
+                                        "  pm.test('4xx response includes message', () => {",
+                                        "    pm.expect(json).to.have.property('message');",
+                                        "  });",
+                                        "} else {",
+                                        "  pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                                        "  pm.test('Response has required fields', () => {",
+                                        "    pm.expect(json).to.have.property('message');",
+                                        "    pm.expect(json).to.have.property('month');",
+                                        "    pm.expect(json).to.have.property('successCount');",
+                                        "    pm.expect(json).to.have.property('errorCount');",
+                                        "  });",
+                                        "  pm.test('Counts are non-negative', () => {",
+                                        "    pm.expect(parseInt(json.successCount)).to.be.at.least(0);",
+                                        "    pm.expect(parseInt(json.errorCount)).to.be.at.least(0);",
+                                        "  });",
+                                        "  pm.test('Message includes successCount and has expected format', () => {",
+"    pm.expect(json.message).to.match(/^Bills generated for \\d+ students$/);",
+"    pm.expect(json.message).to.include(String(json.successCount));",
+"  });",
+"  if (json.errorCount && parseInt(json.errorCount) > 0) {",
+"    pm.test('errors array exists and matches errorCount', () => {",
+                                        "      pm.expect(json).to.have.property('errors');",
+                                        "      pm.expect(json.errors).to.be.an('array');",
+                                        "      pm.expect(json.errors.length).to.eql(parseInt(json.errorCount));",
+                                        "    });",
+                                        "  }",
+                                        "}"
+                                    ],
+                                    "type": "text/javascript"
+                                }
+                            }
+                        ]
+                    },
+                    "response": [
+                        {
+                            "name": "Success - bills generated",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n  \"message\": \"Bills generated for 3 students\",\n  \"month\": \"2026-03\",\n  \"successCount\": 3,\n  \"errorCount\": 0\n}"
+                        },
+                        {
+                            "name": "Partial / failure example",
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n  \"message\": \"Bills generated for 0 students\",\n  \"month\": \"2026-03\",\n  \"successCount\": 0,\n  \"errorCount\": 3,\n  \"errors\": [\n    \"Failed for student 577bfe5d-e4cc-4cf1-a6ba-52f1dc297f8d: Could not find the 'net_payable' column of 'fee_bills' in the schema cache\",\n    \"Failed for student ac12fbd8-2ee6-408f-9b51-9637cc6eac62: Could not find the 'net_payable' column of 'fee_bills' in the schema cache\",\n    \"Failed for student b5f220ed-3bbf-4f94-b2fd-0ffeb96c1335: Could not find the 'net_payable' column of 'fee_bills' in the schema cache\"\n  ]\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "About Bills Endpoints",
+                    "description": "The Bills API manages fee bill generation and retrieval for students with automatic advance deduction.\n\n**Available Endpoints:**\n- GET /api/bills/download-data: Fetch bills for a month with advance and payment details\n- POST /api/bills/generate: Generate bills for all students in a class with automatic FIFO advance application\n\n**Advance Handling (FIFO - First In First Out):**\n- During bill generation, system scans for active (status='active') advances in student's ledger\n- Applies advances in order created to reduce net_payable\n- Fully consumed advances: marked as status='used', used_for_bill_id set, used_at recorded\n- Partially consumed advances: amount reduced, status remains 'active', used_for_bill_id tracked to prevent double usage\n- Advance deduction shown as negative line item in bill\n\n**Bill Calculation Flow:**\n1. Base Fee = tuition + optional fees (exam/annual/computer) + transport\n2. Total Amount = Base Fee + previous dues\n3. Total Advance Used = sum of active advances applied (FIFO)\n4. Net Payable = Total Amount - Total Advance Used\n5. Bill Status = 'paid' (net_payable=0) | 'partial' (advance used) | 'unpaid'\n\n**Key Features:**\n- Prevents generation for closed months\n- Creates itemized bills with all fee components\n- Automatically tracks advance consumption\n- Ensures no duplicate advance usage on bill regeneration\n- Shows advance deductions clearly in invoices and bill downloads"
+                },
+                {
+                    "name": "⚠️ Generate Bills for All Classes [NOT IMPLEMENTED]",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"month\": \"2024-04\",\n  \"include_exam_fee\": true,\n  \"include_annual_fee\": true,\n  \"include_computer_fee\": true\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/bills/generate-all",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "bills",
+                                "generate-all"
+                            ]
+                        },
+                        "description": "⚠️ NOT IMPLEMENTED YET - This endpoint is planned for future release. Use POST /api/bills/generate for individual class bill generation instead."
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Results",
+            "item": [
+                {
+                    "name": "Get Result (Public)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/result?class=1&roll=1&terminal=First&section=A",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "result"
+                            ],
+                            "query": [
+                                {
+                                    "key": "class",
+                                    "value": "1",
+                                    "description": "Student's class (required)"
+                                },
+                                {
+                                    "key": "roll",
+                                    "value": "1",
+                                    "description": "Roll number (required)"
+                                },
+                                {
+                                    "key": "terminal",
+                                    "value": "First",
+                                    "description": "Terminal: First, Second, or Annual (required)"
+                                },
+                                {
+                                    "key": "section",
+                                    "value": "A",
+                                    "description": "Section (optional)",
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "description": "Public endpoint - No authentication required. Get student result by class, roll number, and terminal. Returns marks, percentage, division, and status."
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Subjects",
+            "item": [
+                {
+                    "name": "Create Subject",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"Hindi\",\n  \"code\": \"HND\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/subjects",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "subjects"
+                            ]
+                        },
+                        "description": "Create a new subject (only name and code). Access: Admin Only"
+                    }
+                },
+                {
+                    "name": "Delete Subject (by ID)",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/subjects/:id",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "subjects",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "subject-uuid-here"
+                                }
+                            ]
+                        },
+                        "description": "Delete a subject from the master subjects table by subject ID. This will cascade delete from class_subjects and marks tables. Access: Admin Only"
+                    }
+                },
+                {
+                    "name": "Delete Subject (by Name or Code)",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/subjects?subject_name=Hindi",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "subjects"
+                            ],
+                            "query": [
+                                {
+                                    "key": "subject_name",
+                                    "value": "Hindi",
+                                    "description": "Subject name OR use subject_code instead",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "subject_code",
+                                    "value": "",
+                                    "description": "Subject code (alternative to subject_name)",
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "description": "Delete a subject from the master subjects table by subject_name or subject_code. This will cascade delete from class_subjects and marks tables. Access: Admin Only"
+                    }
+                },
+                {
+                    "name": "Get All Subjects",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/subjects",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "subjects"
+                            ]
+                        },
+                        "description": "Get all available subjects (Master list - only id, name, code). Access: Admin & Teacher"
+                    }
+                },
+                {
+                    "name": "Get Class Subjects",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/subjects/class/:class?section=A",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "subjects",
+                                "class",
+                                ":class"
+                            ],
+                            "query": [
+                                {
+                                    "key": "section",
+                                    "value": "A",
+                                    "description": "Section (optional)",
+                                    "disabled": true
+                                }
+                            ],
+                            "variable": [
+                                {
+                                    "key": "class",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Get subjects for a specific class. Access: Admin & Teacher"
+                    }
+                },
+                {
+                    "name": "Add Subject to Class",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"class\": \"1\",\n  \"subject_name\": \"Hindi\",\n  \"subject_code\": \"HND\",\n  \"section\": \"A\",\n  \"sequence\": 1\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/subjects/add",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "subjects",
+                                "add"
+                            ]
+                        },
+                        "description": "Add an existing subject to a class and section. Subject must already exist in subjects table (created via POST /api/subjects). Body: { class, subject_name OR subject_code, section, sequence (optional) }. Section is mandatory. Access: Admin Only"
+                    }
+                },
+                {
+                    "name": "Add Multiple Subjects to Class",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"class\": \"1\",\n  \"section\": \"A\",\n  \"subjects\": [\n    {\n      \"subject_id\": \"uuid-1\"\n    },\n    {\n      \"subject_id\": \"uuid-2\"\n    }\n  ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/subjects/add-multiple",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "subjects",
+                                "add-multiple"
+                            ]
+                        },
+                        "description": "Add multiple subjects to a class at once. Body: { class, section, subjects: [{ subject_id }] }. Class and section are mandatory. Access: Admin Only"
+                    }
+                },
+                {
+                    "name": "Remove Subject from Class (by ID)",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/subjects/remove/:id",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "subjects",
+                                "remove",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "class-subject-uuid-here"
+                                }
+                            ]
+                        },
+                        "description": "Remove subject from class by class_subjects id. Section is automatically included. Access: Admin Only"
+                    }
+                },
+                {
+                    "name": "Remove Subject from Class (by Class, Section & Subject Name/Code)",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/subjects/remove?class=1&section=A&subject_name=Hindi",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "subjects",
+                                "remove"
+                            ],
+                            "query": [
+                                {
+                                    "key": "class",
+                                    "value": "1",
+                                    "description": "Class name"
+                                },
+                                {
+                                    "key": "section",
+                                    "value": "A",
+                                    "description": "Section (required)"
+                                },
+                                {
+                                    "key": "subject_name",
+                                    "value": "Hindi",
+                                    "description": "Subject name OR use subject_code instead"
+                                }
+                            ]
+                        },
+                        "description": "Remove subject from class and section by class, section, and subject_name (or subject_code). Body: class, section, subject_name OR subject_code. Access: Admin Only"
+                    }
+                },
+                {
+                    "name": "Update Subject Sequence",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"sequence\": 2\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/subjects/sequence/:id",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "subjects",
+                                "sequence",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "class-subject-uuid-here"
+                                }
+                            ]
+                        },
+                        "description": "Update subject sequence in a class. Access: Admin Only"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "MEGA Images",
+            "item": [
+                {
+                    "name": "Upload Single Image",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "image",
+                                    "type": "file",
+                                    "src": ""
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/mega/images?public=false",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "mega",
+                                "images"
+                            ],
+                            "query": [
+                                {
+                                    "key": "public",
+                                    "value": "false",
+                                    "description": "true = MEGA link will be returned. false = private (no link returned)."
+                                }
+                            ]
+                        },
+                        "description": "Upload a single image to MEGA.\n\nNo folderId required (server stores under configured MEGA folder paths).\n\nMultipart field name: `image` (also accepts `file`)."
+                    }
+                },
+                {
+                    "name": "Upload Bulk Images",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "images",
+                                    "type": "file",
+                                    "src": ""
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/mega/images/bulk?public=false",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "mega",
+                                "images",
+                                "bulk"
+                            ],
+                            "query": [
+                                {
+                                    "key": "public",
+                                    "value": "false",
+                                    "description": "true = MEGA links returned for each file. false = private uploads (url will be null)."
+                                }
+                            ]
+                        },
+                        "description": "Upload multiple images to MEGA.\n\nMultipart field name: `images` (multiple). Also accepts multiple `image` fields."
+                    }
+                },
+                {
+                    "name": "List Images (with link)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/mega/images?public=false&includeLinks=true",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "mega",
+                                "images"
+                            ],
+                            "query": [
+                                {
+                                    "key": "public",
+                                    "value": "false",
+                                    "description": "false = list private folder, true = list public folder"
+                                },
+                                {
+                                    "key": "includeLinks",
+                                    "value": "true",
+                                    "description": "true = generate/return links. false = faster list without links."
+                                }
+                            ]
+                        },
+                        "description": "List images stored in MEGA folder (public/private). Returns nodeId and url (if includeLinks=true)."
+                    }
+                },
+                {
+                    "name": "Delete Image",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/mega/images/:nodeId",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "mega",
+                                "images",
+                                ":nodeId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "nodeId",
+                                    "value": "paste-nodeId-here"
+                                }
+                            ]
+                        },
+                        "description": "Delete an image from MEGA by nodeId (you get nodeId from upload/list APIs)."
+                    }
+                }
+            ]
+        }
+    ],
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://localhost:5000",
+            "type": "string"
+        },
+        {
+            "key": "access_token",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "refresh_token",
+            "value": "",
+            "type": "string"
+        }
+    ]
 }
-
