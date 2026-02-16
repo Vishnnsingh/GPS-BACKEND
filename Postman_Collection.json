@@ -1004,7 +1004,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"class\": \"1\",\n  \"section\": \"A\",\n  \"roll_number\": 1,\n  \"amount_paid\": 3000,\n  \"payment_mode\": \"cash\",\n  \"payment_date\": \"2024-01-22\",\n  \"month\": \"2024-01\",\n  \"transaction_id\": \"txn-{{unique_id}}\"\n}"
+                            "raw": "{\n  \"class\": \"1\",\n  \"section\": \"A\",\n  \"roll_number\": 1,\n  \"amount_paid\": 3000,\n  \"payment_mode\": \"cash\",\n  \"payment_date\": \"2024-01-22\",\n  \"month\": \"2024-01\"\n}"
                         },
                         "url": {
                             "raw": "{{base_url}}/api/fees/pay",
@@ -1017,7 +1017,7 @@
                                 "pay"
                             ]
                         },
-                        "description": "Record fee payment using class, section, and roll_number. Requires: class, section, roll_number, amount_paid, payment_mode, payment_date, month. Overpayments automatically create advance_ledger entries. Underpayments do NOT create previous_dues — run POST /api/fees/close-month to record dues. Payment is processed atomically via fn_process_payment. Optional transaction_id supports idempotency. Returns payment details and status. Access: Admin Only.\nPayment modes: cash, upi, online, cheque, bank_transfer, advance, advance_adjustment, dues_adjustment, adjustment.",
+                        "description": "Record fee payment using class, section, and roll_number. Requires: class, section, roll_number, amount_paid, payment_mode, payment_date, month. Overpayments automatically create advance_ledger entries. Underpayments do NOT create previous_dues — run POST /api/fees/close-month to record dues. Payment is processed atomically via fn_process_payment. Transaction ID is auto-generated if not provided. Returns payment details with transaction_id in response. Access: Admin Only.\n\nResponse format:\n{\n  \"message\": \"Payment processed successfully\",\n  \"student_id\": \"uuid\",\n  \"bill_id\": \"uuid\",\n  \"payment\": {\n    \"payment_id\": \"uuid\",\n    \"receipt_no\": \"string\",\n    \"amount_paid\": number,\n    \"advance_created\": number,\n    \"remaining\": number,\n    \"bill_id\": \"uuid\",\n    \"transaction_id\": \"string\"\n  }\n}\n\nPayment modes: cash, upi, online, cheque, bank_transfer, advance, advance_adjustment, dues_adjustment, adjustment.",
                         "event": [
                             {
                                 "listen": "test",
